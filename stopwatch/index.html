@@ -1,77 +1,302 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<title>Stopwatch</title>
-	<style type="text/css">
-		body{
-			background-color: black;
-		}
-		.container{
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			height: 100vh;
-		}
-		#stopwatch{
-			color: white;
-			font-size: 50px;
-		}
-		#buttons{
-			margin-top: 20px;
-		}
-		#buttons button{
-			background-color: white;
-			color: black;
-			border: none;
-			padding: 10px 20px;
-			font-size: 20px;
-			cursor: pointer;
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch & Pomodoro</title>
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: black;
+            font-family: monospace;
+        }
+        .btn {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-family: monospace;
+        }
+        .btn:hover {
+            background-color: #ddd;
+        }
+        .btn:active {
+            background-color: #bbb;
+        }
+        .btn-mode {
+            background-color: #333;
+            color: white;
+        }
+        .btn-mode.active {
+            background-color: white;
+            color: black;
+        }
+        .timer-display {
+            font-family: monospace;
+            letter-spacing: 2px;
+        }
+        .input-label {
+            font-family: monospace;
+        }
+        .timer-status {
+            font-size: 14px;
+            margin-top: 8px;
+            height: 20px;
+        }
+    </style>
 </head>
 <body>
-	<div class="container">
-		<div>
-			<div id="stopwatch">00:00:00</div>
-			<div id="buttons">
-				<button onclick="start()">Start</button>
-				<button onclick="pause()">Pause</button>
-				<button onclick="reset()">Reset</button>
-			</div>
-		</div>
-	</div>
-	<script type="text/javascript">
-		var h = 0;
-		var m = 0;
-		var s = 0;
-		var timer = false;
+    <div class="flex flex-col justify-center items-center h-screen">
+        <!-- Mode Buttons -->
+        <div class="mb-10 flex space-x-4">
+            <button id="stopwatchModeBtn" class="btn btn-mode active" onclick="switchMode('stopwatch')">STOPWATCH</button>
+            <button id="pomodoroModeBtn" class="btn btn-mode" onclick="switchMode('pomodoro')">POMODORO</button>
+        </div>
 
-		function start(){
-			timer = setInterval(function(){
-				s++;
-				if(s > 59){
-					m++;
-					s = 0;
-				}
-				if(m > 59){
-					h++;
-					m = 0;
-				}
-				document.getElementById("stopwatch").innerHTML = (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
-			}, 1000);
-		}
+        <!-- Main Container -->
+        <div class="w-full max-w-lg px-4">
+            <!-- Timer Display -->
+            <div class="text-center mb-6">
+                <div class="text-6xl text-white timer-display" id="timer">00:00:00</div>
+                <div class="text-white timer-status" id="statusText"></div>
+            </div>
 
-		function pause(){
-			clearInterval(timer);
-		}
+            <!-- Stopwatch Controls -->
+            <div id="stopwatchControls" class="mb-8">
+                <div class="flex justify-center space-x-4">
+                    <button class="btn" id="startBtn" onclick="startStopwatch()">START</button>
+                    <button class="btn" id="pauseBtn" onclick="pauseTimer()">PAUSE</button>
+                    <button class="btn" id="resetBtn" onclick="resetStopwatch()">RESET</button>
+                </div>
+            </div>
 
-		function reset(){
-			h = 0;
-			m = 0;
-			s = 0;
-			document.getElementById("stopwatch").innerHTML = "00:00:00";
-			clearInterval(timer);
-		}
-	</script>
+            <!-- Pomodoro Controls -->
+            <div id="pomodoroControls" class="hidden">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="block text-white text-sm font-bold mb-2 input-label" for="focusTime">FOCUS TIME (min)</label>
+                        <input class="shadow appearance-none border bg-black text-white border-white rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="focusTime" type="number" value="25" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-bold mb-2 input-label" for="breakTime">BREAK TIME (min)</label>
+                        <input class="shadow appearance-none border bg-black text-white border-white rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="breakTime" type="number" value="5" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-bold mb-2 input-label" for="cycles">CYCLES</label>
+                        <input class="shadow appearance-none border bg-black text-white border-white rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="cycles" type="number" value="4" min="1">
+                    </div>
+                    <div>
+                        <label class="block text-white text-sm font-bold mb-2 input-label" for="longBreak">LONG BREAK (min)</label>
+                        <input class="shadow appearance-none border bg-black text-white border-white rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline" id="longBreak" type="number" value="15" min="1">
+                    </div>
+                </div>
+                <div class="flex justify-center space-x-4">
+                    <button class="btn" id="startPomodoroBtn" onclick="startPomodoro()">START POMODORO</button>
+                    <button class="btn" id="pausePomoroBtn" onclick="pauseTimer()">PAUSE</button>
+                    <button class="btn" id="resetPomodroBtn" onclick="resetPomodoro()">RESET</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Timer variables
+        let timer = null;
+        let isRunning = false;
+        let mode = 'stopwatch';
+        
+        // Stopwatch variables
+        let stopwatchSeconds = 0;
+        
+        // Pomodoro variables
+        let pomodoroSeconds = 0;
+        let focusTime = 25;
+        let breakTime = 5;
+        let cycles = 4;
+        let longBreak = 15;
+        let currentCycle = 0;
+        let isBreak = false;
+        let totalCycles = 4;
+
+        // Switch between Stopwatch and Pomodoro modes
+        function switchMode(newMode) {
+            resetTimers();
+            mode = newMode;
+            
+            // Update button styles
+            document.getElementById('stopwatchModeBtn').classList.toggle('active', mode === 'stopwatch');
+            document.getElementById('pomodoroModeBtn').classList.toggle('active', mode === 'pomodoro');
+            
+            if (mode === 'pomodoro') {
+                document.getElementById('stopwatchControls').classList.add('hidden');
+                document.getElementById('pomodoroControls').classList.remove('hidden');
+                document.getElementById('timer').textContent = formatTime(focusTime * 60);
+            } else {
+                document.getElementById('pomodoroControls').classList.add('hidden');
+                document.getElementById('stopwatchControls').classList.remove('hidden');
+                document.getElementById('timer').textContent = '00:00:00';
+            }
+            
+            document.getElementById('statusText').textContent = '';
+        }
+        
+        // Start the stopwatch
+        function startStopwatch() {
+            if (isRunning) return; // Prevent multiple starts
+            
+            isRunning = true;
+            timer = setInterval(() => {
+                stopwatchSeconds++;
+                document.getElementById('timer').textContent = formatTime(stopwatchSeconds);
+            }, 1000);
+        }
+        
+        // Reset the stopwatch
+        function resetStopwatch() {
+            clearInterval(timer);
+            isRunning = false;
+            stopwatchSeconds = 0;
+            document.getElementById('timer').textContent = formatTime(stopwatchSeconds);
+            document.getElementById('statusText').textContent = '';
+        }
+        
+        // Start Pomodoro timer
+        function startPomodoro() {
+            if (isRunning) return; // Prevent multiple starts
+            
+            // Get settings from inputs
+            focusTime = parseInt(document.getElementById('focusTime').value);
+            breakTime = parseInt(document.getElementById('breakTime').value);
+            totalCycles = parseInt(document.getElementById('cycles').value);
+            longBreak = parseInt(document.getElementById('longBreak').value);
+            
+            // Reset cycle info
+            currentCycle = 0;
+            isBreak = false;
+            
+            // Initialize the timer with focus time
+            pomodoroSeconds = focusTime * 60;
+            document.getElementById('timer').textContent = formatTime(pomodoroSeconds);
+            document.getElementById('statusText').textContent = `FOCUS SESSION 1/${totalCycles}`;
+            
+            runPomodoroTimer();
+        }
+        
+        // Run the Pomodoro timer logic
+        function runPomodoroTimer() {
+            isRunning = true;
+            
+            timer = setInterval(() => {
+                pomodoroSeconds--;
+                
+                // When timer reaches zero
+                if (pomodoroSeconds <= 0) {
+                    handlePomodoroInterval();
+                }
+                
+                document.getElementById('timer').textContent = formatTime(pomodoroSeconds);
+            }, 1000);
+        }
+        
+        // Handle Pomodoro interval completion
+        function handlePomodoroInterval() {
+            clearInterval(timer);
+            
+            if (isBreak) {
+                // Break finished, start focus time
+                isBreak = false;
+                currentCycle++;
+                
+                // Check if all cycles completed
+                if (currentCycle >= totalCycles) {
+                    completePomodoro();
+                    return;
+                }
+                
+                // Start next focus session
+                pomodoroSeconds = focusTime * 60;
+                document.getElementById('statusText').textContent = `FOCUS SESSION ${currentCycle + 1}/${totalCycles}`;
+                playNotificationSound();
+                alert(`Break complete! Starting Focus Session ${currentCycle + 1}`);
+            } else {
+                // Focus time finished, start break
+                isBreak = true;
+                
+                // Check if it's time for a long break (after completing all cycles except the last)
+                if (currentCycle === totalCycles - 1) {
+                    pomodoroSeconds = longBreak * 60;
+                    document.getElementById('statusText').textContent = 'LONG BREAK';
+                    playNotificationSound();
+                    alert('Focus session complete! Taking a long break now.');
+                } else {
+                    pomodoroSeconds = breakTime * 60;
+                    document.getElementById('statusText').textContent = 'SHORT BREAK';
+                    playNotificationSound();
+                    alert('Focus session complete! Taking a short break now.');
+                }
+            }
+            
+            runPomodoroTimer();
+        }
+        
+        // Complete Pomodoro session
+        function completePomodoro() {
+            isRunning = false;
+            document.getElementById('statusText').textContent = 'POMODORO COMPLETE!';
+            playNotificationSound();
+            alert('Congratulations! You have completed the Pomodoro session.');
+        }
+        
+        // Reset Pomodoro timer
+        function resetPomodoro() {
+            clearInterval(timer);
+            isRunning = false;
+            currentCycle = 0;
+            isBreak = false;
+            pomodoroSeconds = focusTime * 60;
+            document.getElementById('timer').textContent = formatTime(pomodoroSeconds);
+            document.getElementById('statusText').textContent = '';
+        }
+        
+        // Pause the current timer
+        function pauseTimer() {
+            clearInterval(timer);
+            isRunning = false;
+        }
+        
+        // Reset all timers
+        function resetTimers() {
+            clearInterval(timer);
+            isRunning = false;
+            stopwatchSeconds = 0;
+            pomodoroSeconds = 0;
+        }
+        
+        // Format time as HH:MM:SS
+        function formatTime(totalSeconds) {
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+        }
+        
+        // Add leading zeros
+        function pad(number) {
+            return number < 10 ? '0' + number : number;
+        }
+        
+        // Play notification sound (browser may block this)
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+                audio.play();
+            } catch (e) {
+                // Silent fail - audio might be blocked by browser
+            }
+        }
+    </script>
 </body>
 </html>
